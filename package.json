@@ -15,5 +15,9 @@
   "bugs": {
     "url": "https://github.com/jplegoff/homebot/issues"
   },
-  "homepage": "https://github.com/jplegoff/homebot#readme"
+  "homepage": "https://github.com/jplegoff/homebot#readme",
+  "dependencies": {
+    "@slack/client": "^3.16.0",
+    "dotenv": "^5.0.0"
+  }
 }
