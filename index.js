@@ -57,6 +57,11 @@ rtm.on(CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, () => {
 
 rtm.on(RTM_EVENTS.MESSAGE, function(message) {
   console.log(message);
+
+  web.users.info(message.user).then((res) => {
+    console.log(res);
+  });
+
 });
 
 // Start the connecting process
