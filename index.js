@@ -3,6 +3,8 @@ require('dotenv').load();
 const { RtmClient, CLIENT_EVENTS, WebClient } = require('@slack/client');
 var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 
+var DomoticsBot = require('./lib/domoticzbot');
+
 // An access token (from your Slack app or custom integration - usually xoxb)
 const token = process.env.SLACK_TOKEN;
 
@@ -16,6 +18,8 @@ const rtm = new RtmClient(token, {
   useRtmConnect: true,
   logLevel: 'info'
 });
+
+const db = {};
 
 // Need a web client to find a channel where the app can post a message
 const web = new WebClient(token);
@@ -38,6 +42,7 @@ rtm.on(CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, () => {
   // Wait for the channels list response
   channelsListPromise.then((res) => {
 
+    console.debug(res);
     // Take any channel for which the bot is a member
     const channel = res.channels.find(c => c.is_member);
 

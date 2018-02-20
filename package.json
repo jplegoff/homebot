@@ -2,10 +2,10 @@
   "name": "homebot",
   "version": "1.0.0",
   "description": "Home bot",
-  "main": "index.js",
+  "main": "homebot.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node homebot.js"
   },
   "repository": {
     "type": "git",
