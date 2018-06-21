@@ -412,7 +412,7 @@
     "/buckets/{bucketId}/userData" : {
       "get" : {
         "tags" : [ "white-listed" ],
-        "summary" : "Get the data of a user",
+        "summary" : "Get the data of a user modif",
         "operationId" : "getUserData",
         "parameters" : [ ],
         "responses" : {
