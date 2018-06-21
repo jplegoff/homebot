@@ -1,0 +1,872 @@
+{
+  "swagger" : "2.0",
+  "info" : {
+    "description" : " ",
+    "version" : "1.6.0",
+    "title" : "Demo copy Project service API",
+    "contact" : { }
+  },
+  "host" : "project.restlet.com",
+  "basePath" : "/api",
+  "schemes" : [ "https" ],
+  "consumes" : [ "application/json" ],
+  "produces" : [ "application/json" ],
+  "paths" : {
+    "/buckets/{bucketId}/projects" : {
+      "get" : {
+        "summary" : "get projects",
+        "description" : "Gets all the projects available for the user, either he's the owner or the project is shared with him. Does not support pagination or filtering yet.",
+        "operationId" : "getProjects",
+        "parameters" : [ {
+          "name" : "ownerId",
+          "in" : "query",
+          "required" : false,
+          "type" : "string",
+          "description" : "Only retrieve the projects with this ownerId.\n\nIf none are present or the user lacks the access rights, an empty project list is returned."
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Success",
+            "schema" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/definitions/ProjectMetadataList"
+              }
+            }
+          },
+          "400" : {
+            "description" : "Invalid `bucketId` value.",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "401" : {
+            "description" : "JWT is expired or invalid (HTTP status 401).",
+            "schema" : {
+              "$ref" : "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "post" : {
+        "summary" : "Create a new project",
+        "description" : "Create a new project attached to the current user or another user (typically a team owner).\nReturns the project metadata with the `lastUpdate` property that should be given to update the project.\n\nIf the projectId is filled in, it will be used, otherwise, an id will be aut-o generated.",
+        "operationId" : "createProject",
+        "consumes" : [ ],
+        "parameters" : [ {
+          "name" : "body",
+          "in" : "body",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/definitions/ProjectCreation"
+          }
+        } ],
+        "responses" : {
+          "201" : {
+            "description" : "Created",
+            "schema" : {
+              "$ref" : "#/definitions/ProjectMetadata"
+            },
+            "headers" : {
+              "Location" : {
+                "type" : "string",
+                "description" : "location of the new project"
+              }
+            }
+          },
+          "400" : {
+            "description" : "List or errors:\n- Invalid `bucketId` value.\n- Could not use visibility `private` for a owner who is not the current user.\n",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "401" : {
+            "description" : "JWT is expired or invalid (HTTP status 401).",
+            "schema" : {
+              "$ref" : "#/definitions/ValidationError"
+            }
+          },
+          "402" : {
+            "description" : "Payment required. User doesn't have the Free plan (at least) or has reach the number of projects limit (HTTP status 402). Value of `message` property could be displayed to the end user (example: `project quota reached`).",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "403" : {
+            "description" : "User could not create a project for the given `ownerId` because is does not belong to the owner's team.",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "422" : {
+            "description" : "The request payload did not contains the expected fields, or their value was invalid (HTTP status 422). Values of `messages` property could be displayed to the end user (example: field `name`, message `value required`).",
+            "schema" : {
+              "$ref" : "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete" : {
+        "summary" : "Delete a project",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Status 200"
+          }
+        }
+      },
+      "parameters" : [ {
+        "name" : "bucketId",
+        "in" : "path",
+        "required" : true,
+        "type" : "string",
+        "description" : "The id of the bucket that contains projects.",
+        "enum" : [ "studio_api", "dhc_sync", "dhc_sharing", "apispark_api", "apispark_store" ]
+      } ]
+    },
+    "/buckets/{bucketId}/projects/last" : {
+      "get" : {
+        "summary" : "get last opened project",
+        "description" : "Return the last project opened by the user or 204 if the user has never open a project or the last opened project is not available anymore.",
+        "operationId" : "getLastProject",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Success",
+            "schema" : {
+              "$ref" : "#/definitions/Project"
+            }
+          },
+          "204" : {
+            "description" : "No last project or last project could not be opened (deleted or unshared)."
+          },
+          "400" : {
+            "description" : "Invalid `bucketId` value.",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "401" : {
+            "description" : "JWT is expired or invalid (HTTP status 401).",
+            "schema" : {
+              "$ref" : "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "parameters" : [ {
+        "name" : "bucketId",
+        "in" : "path",
+        "required" : true,
+        "type" : "string",
+        "description" : "The id of the bucket that contains projects.",
+        "enum" : [ "studio_api", "dhc_sync", "dhc_sharing", "apispark_api", "apispark_store" ]
+      } ]
+    },
+    "/buckets/{bucketId}/projects/{projectId}" : {
+      "get" : {
+        "summary" : "Get a project",
+        "operationId" : "getProject",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Success",
+            "schema" : {
+              "$ref" : "#/definitions/Project"
+            }
+          },
+          "400" : {
+            "description" : "Invalid `bucketId` value.",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "401" : {
+            "description" : "JWT is expired or invalid (HTTP status 401).",
+            "schema" : {
+              "$ref" : "#/definitions/ValidationError"
+            }
+          },
+          "404" : {
+            "description" : "Project doesn't exist or is not available to the current user (HTTP status 404).",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "put" : {
+        "summary" : "Update a project.",
+        "operationId" : "updateProject",
+        "consumes" : [ ],
+        "parameters" : [ {
+          "name" : "body",
+          "in" : "body",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/definitions/ProjectUpdate"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Success. Returns the updated project metadata with the new last updated date used for versionning",
+            "schema" : {
+              "$ref" : "#/definitions/ProjectMetadata"
+            }
+          },
+          "400" : {
+            "description" : "Invalid `bucketId` value.",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "401" : {
+            "description" : "JWT is expired or invalid (HTTP status 401).",
+            "schema" : {
+              "$ref" : "#/definitions/ValidationError"
+            }
+          },
+          "404" : {
+            "description" : "Project doesn't exist or is not available to the current user (HTTP status 404).",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "409" : {
+            "description" : "Version conflict (HTTP status 409).",
+            "schema" : {
+              "$ref" : "#/definitions/SaveConflictError"
+            }
+          },
+          "422" : {
+            "description" : "The request payload did not contains the expected fields, or their value was invalid (HTTP status 422). Values of `messages` property could be displayed to the end user (example: field `name`, message `value required`).",
+            "schema" : {
+              "$ref" : "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "delete" : {
+        "summary" : "Delete a project.",
+        "operationId" : "deleteProject",
+        "parameters" : [ ],
+        "responses" : {
+          "204" : {
+            "description" : "Project deleted"
+          },
+          "400" : {
+            "description" : "Invalid `bucketId` value.",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "401" : {
+            "description" : "JWT is expired or invalid (HTTP status 401).",
+            "schema" : {
+              "$ref" : "#/definitions/ValidationError"
+            }
+          },
+          "403" : {
+            "description" : "Project is available for the user but the user is not the owner, thus he could not delete the project.",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "404" : {
+            "description" : "Project doesn't exist or is not available to the current user (HTTP status 404).",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "parameters" : [ {
+        "name" : "bucketId",
+        "in" : "path",
+        "required" : true,
+        "type" : "string",
+        "description" : "The id of the bucket that contains projects.",
+        "enum" : [ "studio_api", "dhc_sync", "dhc_sharing", "apispark_api", "apispark_store" ]
+      }, {
+        "name" : "projectId",
+        "in" : "path",
+        "required" : true,
+        "type" : "string"
+      } ]
+    },
+    "/buckets/{bucketId}/projects/{projectId}/metadata" : {
+      "patch" : {
+        "summary" : "Updates project metadata.",
+        "description" : "Updates the metadata.\nThis operation does not update the `lastUpdated` property.\n\nUsed to:\n- change the name (ie: sets `name` attribute)\n- change the visibility of a project we own (ie: sets `visibility` attribute)\n- share a project we own with another team that hasn't reached its quota (ie: sets `ownerId` and `visibility` attributes)\n",
+        "operationId" : "updateProjectMetadata",
+        "consumes" : [ ],
+        "parameters" : [ {
+          "name" : "body",
+          "in" : "body",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/definitions/ProjectMetadataUpdate"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Success. Returns the updated project metadata.",
+            "schema" : {
+              "$ref" : "#/definitions/ProjectMetadata"
+            },
+            "headers" : {
+              "Location" : {
+                "type" : "string",
+                "description" : "location of the new project"
+              }
+            }
+          },
+          "400" : {
+            "description" : "List of errors:\n- Invalid `bucketId` value\n- Wrong usage of attributes regarding the business rules (cf above)\n",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "401" : {
+            "description" : "JWT is expired or invalid (HTTP status 401).",
+            "schema" : {
+              "$ref" : "#/definitions/ValidationError"
+            }
+          },
+          "402" : {
+            "description" : "Payment required. User doesn't have the Free plan (at least) or has reach the number of projects limit (HTTP status 402). Value of `message` property could be displayed to the end user (example: `project quota reached`).",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "403" : {
+            "description" : "Project is available for the user but the user is not the owner, thus he could not update the metadata.",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "404" : {
+            "description" : "Project doesn't exist or is not available to the current user (HTTP status 404).",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "422" : {
+            "description" : "The request payload did not contains the expected fields, or their value was invalid (HTTP status 422). Values of `messages` property could be displayed to the end user (example: field `name`, message `value required`).",
+            "schema" : {
+              "$ref" : "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "parameters" : [ {
+        "name" : "bucketId",
+        "in" : "path",
+        "required" : true,
+        "type" : "string",
+        "description" : "The id of the bucket that contains projects.",
+        "enum" : [ "studio_api", "dhc_sync", "dhc_sharing", "apispark_api", "apispark_store" ]
+      }, {
+        "name" : "projectId",
+        "in" : "path",
+        "required" : true,
+        "type" : "string"
+      } ]
+    },
+    "/buckets/{bucketId}/projectsCount" : {
+      "get" : {
+        "summary" : "get projects count",
+        "description" : "Returns the number of projects owned by the user.",
+        "operationId" : "getProjectsCount",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Success",
+            "schema" : {
+              "$ref" : "#/definitions/Count"
+            }
+          },
+          "400" : {
+            "description" : "Invalid `bucketId` value.",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "401" : {
+            "description" : "JWT is expired or invalid (HTTP status 401).",
+            "schema" : {
+              "$ref" : "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "parameters" : [ {
+        "name" : "bucketId",
+        "in" : "path",
+        "required" : true,
+        "type" : "string",
+        "description" : "The id of the bucket that contains projects.",
+        "enum" : [ "studio_api", "dhc_sync", "dhc_sharing", "apispark_api", "apispark_store" ]
+      } ]
+    },
+    "/buckets/{bucketId}/userData" : {
+      "get" : {
+        "tags" : [ "white-listed" ],
+        "summary" : "Get the data of a user",
+        "operationId" : "getUserData",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Success"
+          },
+          "400" : {
+            "description" : "Invalid `bucketId` value.",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "401" : {
+            "description" : "JWT is expired or invalid (HTTP status 401).",
+            "schema" : {
+              "$ref" : "#/definitions/ValidationError"
+            }
+          },
+          "404" : {
+            "description" : "User data doesn't exist or is not available to the current user (HTTP status 404).",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "put" : {
+        "summary" : "Save the user data",
+        "description" : "Update or create the user data attached to the current user.",
+        "operationId" : "saveUserData",
+        "consumes" : [ ],
+        "parameters" : [ {
+          "name" : "body",
+          "in" : "body",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/definitions/UserDataUpdate"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Success"
+          },
+          "400" : {
+            "description" : "List or errors:\n- Invalid `bucketId` value.\n",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "401" : {
+            "description" : "JWT is expired or invalid (HTTP status 401).",
+            "schema" : {
+              "$ref" : "#/definitions/ValidationError"
+            }
+          },
+          "422" : {
+            "description" : "The request payload did not contains the expected fields, or their value was invalid (HTTP status 422). Values of `messages` property could be displayed to the end user (example: field `name`, message `value required`).",
+            "schema" : {
+              "$ref" : "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "parameters" : [ {
+        "name" : "bucketId",
+        "in" : "path",
+        "required" : true,
+        "type" : "string",
+        "description" : "The id of the bucket that contains user data.",
+        "enum" : [ "dhc_settings" ]
+      } ]
+    },
+    "/buckets/{bucketId}/teamsAndQuota" : {
+      "get" : {
+        "summary" : "List the user's teams and quota",
+        "description" : "Return the owners of all the teams that the user belongs to with the team's quota for the bucket.\nEndpoint is versioned using content negocation :\n- v1:  May include the user's team if he has a plan with team capability.\n- v2:  Always includes the user's team regardless of his plan.",
+        "operationId" : "getTeamsAndQuota",
+        "produces" : [ "application/json", "application/vnd.teams.v2+json" ],
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Success",
+            "schema" : {
+              "$ref" : "#/definitions/TeamListWithQuota"
+            },
+            "examples" : {
+              "application/vnd.teams.v2+json" : "{\n  \"items\": [\n    {\n       \"ownerId\": \"auth0|12345\",\n       \"ownerEmail\": \"toto@restlet.com\",\n       \"ownerProvider\": \"auth0\",\n       \"ownerName\": \"Toto\",\n       \"ownerPlan\": \"scale\",\n       \"quotaReached\": false,\n       \"projectCount\": 8,\n       \"projectQuota\": 50\n     }\n  ],\n  \"total\": 1\n}"
+            }
+          },
+          "401" : {
+            "description" : "JWT is expired or invalid (HTTP status 401).",
+            "schema" : {
+              "$ref" : "#/definitions/ValidationError"
+            }
+          }
+        }
+      },
+      "parameters" : [ {
+        "name" : "bucketId",
+        "in" : "path",
+        "required" : true,
+        "type" : "string",
+        "description" : "The id of the bucket that contains projects.",
+        "enum" : [ "studio_api", "dhc_sync", "dhc_sharing", "apispark_api", "apispark_store" ]
+      } ]
+    }
+  },
+  "definitions" : {
+    "ProjectMetadataList" : {
+      "type" : "object",
+      "required" : [ "items" ],
+      "properties" : {
+        "items" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/ProjectMetadata"
+          }
+        },
+        "teamProjectsAvailable" : {
+          "type" : "boolean",
+          "description" : "If false, only user projects have been retrieved because team functionality is unavailable"
+        }
+      }
+    },
+    "ProjectMetadata" : {
+      "type" : "object",
+      "required" : [ "creationDate", "lastUpdated", "name", "owner", "visibility" ],
+      "properties" : {
+        "projectId" : {
+          "type" : "string",
+          "description" : "unique identifier of the project"
+        },
+        "name" : {
+          "type" : "string",
+          "description" : "project name"
+        },
+        "visibility" : {
+          "type" : "string",
+          "description" : "the visibility of a project, `private` to the owner or `shared` with the whole team.",
+          "enum" : [ "private", "shared" ]
+        },
+        "creator" : {
+          "$ref" : "#/definitions/User"
+        },
+        "owner" : {
+          "$ref" : "#/definitions/User"
+        },
+        "creationDate" : {
+          "type" : "string",
+          "description" : "date in ISO 8601 format",
+          "example" : "2015-04-21T12:00:00Z"
+        },
+        "lastUpdated" : {
+          "type" : "string",
+          "description" : "date in ISO 8601 format",
+          "example" : "2015-04-21T12:00:00Z"
+        }
+      }
+    },
+    "ProjectMetadataUpdate" : {
+      "type" : "object",
+      "properties" : {
+        "name" : {
+          "type" : "string",
+          "description" : "project name"
+        },
+        "visibility" : {
+          "type" : "string",
+          "description" : "the visibility of a project, `private` to the owner or `shared` with the whole team. If missing, the default value depends of the bucket (`private` for `studio_api` or `dhc_sync` and  `shared` for `dhc_sharing`)",
+          "enum" : [ "private", "shared" ]
+        },
+        "ownerId" : {
+          "type" : "string",
+          "description" : "the ownerId of the project owner."
+        }
+      }
+    },
+    "Project" : {
+      "type" : "object",
+      "required" : [ "content", "creationDate", "lastUpdated", "name", "owner", "projectId", "visibility" ],
+      "properties" : {
+        "projectId" : {
+          "type" : "string",
+          "description" : "unique identifier of the project"
+        },
+        "name" : {
+          "type" : "string",
+          "description" : "project name"
+        },
+        "visibility" : {
+          "type" : "string",
+          "description" : "the visibility of a project, `private` to the owner or `shared` with the whole team.",
+          "enum" : [ "private", "shared" ]
+        },
+        "creator" : {
+          "$ref" : "#/definitions/User"
+        },
+        "owner" : {
+          "$ref" : "#/definitions/User"
+        },
+        "creationDate" : {
+          "type" : "string",
+          "description" : "date in ISO 8601 format",
+          "example" : "2015-04-21T12:00:00Z"
+        },
+        "lastUpdated" : {
+          "type" : "string",
+          "description" : "date in ISO 8601 format",
+          "example" : "2015-04-21T12:00:00Z"
+        },
+        "content" : {
+          "type" : "string",
+          "description" : "text encoded content"
+        }
+      }
+    },
+    "ProjectCreation" : {
+      "type" : "object",
+      "required" : [ "name" ],
+      "properties" : {
+        "name" : {
+          "type" : "string",
+          "description" : "The project name"
+        },
+        "projectId" : {
+          "type" : "string",
+          "description" : "The optional id of the project to be created."
+        },
+        "ownerId" : {
+          "type" : "string",
+          "description" : "The owner id. Required only to attach a project to another user (typically a team owner). If missing, the owner is the current user.",
+          "example" : "usr_5457edea1b8f33391a000004"
+        },
+        "visibility" : {
+          "type" : "string",
+          "description" : "the visibility of the project, private or shared.",
+          "enum" : [ "private", "shared" ]
+        },
+        "content" : {
+          "type" : "string",
+          "description" : "The project content (optional)"
+        }
+      }
+    },
+    "ProjectUpdate" : {
+      "type" : "object",
+      "required" : [ "content", "lastUpdated" ],
+      "properties" : {
+        "content" : {
+          "type" : "string",
+          "description" : "text encoded content"
+        },
+        "lastUpdated" : {
+          "type" : "string",
+          "description" : "date in ISO 8601 format. last updated date of the project that will be updated. Used to check concurrent modification.",
+          "example" : "2015-04-21T12:00:00Z"
+        }
+      }
+    },
+    "Count" : {
+      "type" : "object",
+      "required" : [ "total" ],
+      "properties" : {
+        "total" : {
+          "type" : "integer",
+          "description" : "total number of items in the bucket"
+        }
+      }
+    },
+    "TeamListWithQuota" : {
+      "type" : "object",
+      "required" : [ "items" ],
+      "properties" : {
+        "items" : {
+          "$ref" : "#/definitions/TeamWithQuota"
+        },
+        "total" : {
+          "type" : "integer",
+          "description" : "The total number of teams this user belongs to (including his own if he has a plan with team capability)",
+          "example" : 3
+        }
+      }
+    },
+    "TeamWithQuota" : {
+      "type" : "object",
+      "required" : [ "ownerEmail", "ownerId", "ownerName", "ownerProvider", "quotaReached" ],
+      "properties" : {
+        "ownerId" : {
+          "type" : "string",
+          "description" : "The owner's unique identifier",
+          "example" : "usr_5457 edea1b8f33391a000004"
+        },
+        "ownerEmail" : {
+          "type" : "string",
+          "description" : "The owner's email",
+          "example" : "john.doe@gmail.com"
+        },
+        "ownerProvider" : {
+          "type" : "string",
+          "description" : "The owner's provider",
+          "example" : "google"
+        },
+        "ownerName" : {
+          "type" : "string",
+          "example" : "John Doe"
+        },
+        "quotaReached" : {
+          "type" : "boolean",
+          "description" : "`true` if the quota is reached. May be null in case of failure to retrieve the quota"
+        },
+        "ownerPlan" : {
+          "type" : "string",
+          "description" : "The plan of the team owner\n\nOnly provided if the bucket enforces a quota",
+          "enum" : [ "team", "scale" ]
+        },
+        "projectCount" : {
+          "type" : "integer",
+          "format" : "int64",
+          "description" : "The number of projects owned by the team\n\nOnly provided if the bucket enforces a quota"
+        },
+        "projectQuota" : {
+          "type" : "integer",
+          "description" : "The quota of the team\n\nOnly provided if the bucket enforces a quota"
+        }
+      },
+      "example" : "{\n   \"ownerId\": \"auth0|12345\",\n   \"ownerEmail\": \"toto@restlet.com\",\n   \"ownerProvider\": \"auth0\",\n   \"ownerName\": \"Toto\",\n   \"ownerPlan\": \"scale\",\n   \"quotaReached\": false,\n   \"projectCount\": 8,\n   \"projectQuota\": 50\n }"
+    },
+    "User" : {
+      "type" : "object",
+      "required" : [ "email", "provider", "userId" ],
+      "properties" : {
+        "userId" : {
+          "type" : "string",
+          "description" : "The user's unique identifier",
+          "example" : "usr_5457edea1b8f33391a000004"
+        },
+        "email" : {
+          "type" : "string",
+          "example" : "john.doe@gmail.com"
+        },
+        "provider" : {
+          "type" : "string",
+          "example" : "google"
+        },
+        "name" : {
+          "type" : "string",
+          "example" : "John Doe"
+        }
+      }
+    },
+    "UserData" : {
+      "type" : "object",
+      "required" : [ "content", "creationDate", "lastUpdated" ],
+      "properties" : {
+        "creationDate" : {
+          "type" : "string",
+          "description" : "date in ISO 8601 format",
+          "example" : "2015-04-21T12:00:00Z"
+        },
+        "lastUpdated" : {
+          "type" : "string",
+          "description" : "date in ISO 8601 format",
+          "example" : "2015-04-21T12:00:00Z"
+        },
+        "content" : {
+          "type" : "string",
+          "description" : "text encoded content"
+        }
+      }
+    },
+    "UserDataUpdate" : {
+      "type" : "object",
+      "properties" : {
+        "content" : {
+          "type" : "string",
+          "description" : "text encoded content"
+        },
+        "lastUpdated" : {
+          "type" : "string",
+          "description" : "date in ISO 8601 format. last updated date of the user data that will be updated. Used to check concurrent modification.",
+          "example" : "2015-04-21T12:00:00Z"
+        }
+      }
+    },
+    "Error" : {
+      "type" : "object",
+      "properties" : {
+        "status" : {
+          "type" : "integer",
+          "description" : "Error code",
+          "example" : 400
+        },
+        "message" : {
+          "type" : "string",
+          "description" : "The message",
+          "example" : "Not Found"
+        }
+      }
+    },
+    "SaveConflictError" : {
+      "type" : "object",
+      "properties" : {
+        "lastUpdated" : {
+          "type" : "string",
+          "description" : "The last update date of the project.",
+          "example" : "2015-04-21T12:00:00Z"
+        },
+        "lastUpdaterName" : {
+          "type" : "string",
+          "description" : "The name of the user who has made the last change on the project.",
+          "example" : "John Wayne"
+        }
+      }
+    },
+    "ValidationError" : {
+      "type" : "object",
+      "required" : [ "messages" ],
+      "properties" : {
+        "status" : {
+          "type" : "integer",
+          "description" : "Error code"
+        },
+        "messages" : {
+          "type" : "array",
+          "description" : "A list of global and field messages",
+          "items" : {
+            "required" : [ "message" ],
+            "type" : "object",
+            "properties" : {
+              "field" : {
+                "type" : "string",
+                "description" : "The field in error. If missing, this is a global message",
+                "example" : "user.addresses[1].zipCode"
+              },
+              "message" : {
+                "type" : "string",
+                "description" : "The message",
+                "example" : "Value required"
+              },
+              "location" : {
+                "type" : "string",
+                "description" : "Indicates the location of the error; mainly used in case the request's payload is malformed",
+                "example" : "line: 1, column: 2"
+              },
+              "type" : {
+                "type" : "string",
+                "description" : "Message Type. If this property is missing, the message type is error",
+                "enum" : [ "info", "warning", "error" ],
+                "example" : "error"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
